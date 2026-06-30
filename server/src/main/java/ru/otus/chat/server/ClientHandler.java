@@ -25,6 +25,10 @@ public class ClientHandler implements Runnable {
         this.server = server;
     }
 
+    public String getNickname() {
+        return nickname;
+    }
+
     @Override
     public void run() {
         try {
