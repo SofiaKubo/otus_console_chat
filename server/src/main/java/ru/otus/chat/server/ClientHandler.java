@@ -45,12 +45,11 @@ public class ClientHandler implements Runnable {
             readMessagesLoop();
         } catch (IOException e) {
             System.err.println(
-                "[SERVER] Client communication error "
+                "[SERVER] Client "
                     + getClientDescription()
-                    + ": "
+                    + " disconnected unexpectedly. Reason: "
                     + e.getMessage()
             );
-            e.printStackTrace();
         } finally {
             cleanup();
         }
@@ -83,10 +82,11 @@ public class ClientHandler implements Runnable {
 
                 if (registered) {
                     this.nickname = candidate;
-                    sendMessage("You joined the chat as " + nickname + ".");
+                    sendMessage("Welcome, " + nickname + "! You joined the chat.");
                     return true;
                 }
-                sendMessage("Nickname is already taken. Try again.");
+
+                sendMessage("Nickname " + candidate + " is already taken. Try again.");
             } catch (IllegalArgumentException e) {
                 sendMessage(e.getMessage());
             }
@@ -94,19 +94,10 @@ public class ClientHandler implements Runnable {
     }
 
     private void readMessagesLoop() throws IOException {
-        System.out.println(
-            "[SERVER] Started reading messages from "
-                + getClientDescription()
-                + "."
-        );
-
         while (true) {
             String message = reader.readLine();
 
             if (message == null) {
-                System.out.println(
-                    "[SERVER] Client disconnected: " + getClientDescription()
-                );
                 return;
             }
             message = message.trim();
@@ -132,12 +123,6 @@ public class ClientHandler implements Runnable {
         closeResource(writer, "writer");
         closeResource(reader, "reader");
         closeResource(socket, "socket");
-
-        System.out.println(
-            "[SERVER] Client resources closed for "
-                + getClientDescription()
-                + "."
-        );
     }
 
     private void closeResource(Closeable resource, String resourceName) {
@@ -151,7 +136,7 @@ public class ClientHandler implements Runnable {
             System.err.println(
                 "[SERVER] Failed to close "
                     + resourceName
-                    + " for "
+                    + " for client "
                     + getClientDescription()
                     + ": "
                     + e.getMessage()
@@ -167,7 +152,7 @@ public class ClientHandler implements Runnable {
 
     private String getClientDescription() {
         if (nickname != null) {
-            return "'" + nickname + "'";
+            return nickname;
         }
 
         return String.valueOf(socket.getRemoteSocketAddress());
