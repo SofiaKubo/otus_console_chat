@@ -25,33 +25,33 @@ public class ChatServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 String clientAddress = clientSocket
-                        .getRemoteSocketAddress()
-                        .toString();
+                    .getRemoteSocketAddress()
+                    .toString();
 
                 System.out.println("[SERVER] Client connected: " + clientAddress);
                 try {
                     ClientHandler clientHandler = new ClientHandler(
-                            clientSocket,
-                            this
+                        clientSocket,
+                        this
                     );
                     Thread thread = new Thread(
-                            clientHandler,
-                            "client-handler-" + clientAddress
+                        clientHandler,
+                        "client-handler-" + clientAddress
                     );
 
                     System.out.println(
-                            "[SERVER] Client handler created for: "
-                                    + clientAddress
+                        "[SERVER] Client handler created for: "
+                            + clientAddress
                     );
                     thread.start();
                     System.out.println(
-                            "[SERVER] Client handler thread started for: "
-                                    + clientAddress
+                        "[SERVER] Client handler thread started for: "
+                            + clientAddress
                     );
                 } catch (RuntimeException e) {
                     System.err.println(
-                            "[SERVER] Failed to start client handler for: "
-                                    + clientAddress
+                        "[SERVER] Failed to start client handler for: "
+                            + clientAddress
                     );
                     System.err.println("[SERVER] Reason: " + e.getMessage());
                     closeClientSocket(clientSocket);
@@ -70,8 +70,8 @@ public class ChatServer {
             throw new IllegalArgumentException("ClientHandler cannot be null.");
         }
         ClientHandler previousClient = clients.putIfAbsent(
-                nickname,
-                clientHandler
+            nickname,
+            clientHandler
         );
 
         if (previousClient != null) {
@@ -83,6 +83,16 @@ public class ChatServer {
     }
 
     public void removeClient(String nickname) {
+        if (nickname == null) {
+            return;
+        }
+
+        ClientHandler removedClient = clients.remove(nickname);
+
+        if (removedClient != null) {
+            System.out.println("[SERVER] Client disconnected: " + nickname);
+            broadcastSystemMessage(nickname + " left the chat.");
+        }
     }
 
     public void handleMessage(ClientHandler sender, String message) {
@@ -112,7 +122,7 @@ public class ChatServer {
         }
         if (nickname.startsWith("/")) {
             throw new IllegalArgumentException(
-                    "Nickname cannot start with a slash('/')."
+                "Nickname cannot start with a slash('/')."
             );
         }
     }
@@ -123,8 +133,8 @@ public class ChatServer {
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println(
-                        "[SERVER] Failed to close client socket: "
-                                + e.getMessage()
+                    "[SERVER] Failed to close client socket: "
+                        + e.getMessage()
                 );
             }
         }

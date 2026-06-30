@@ -2,6 +2,7 @@ package ru.otus.chat.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,8 +32,8 @@ public class ClientHandler implements Runnable {
 
             if (!registerNickname()) {
                 System.out.println(
-                        "[SERVER] Client disconnected before registration: "
-                                + socket.getRemoteSocketAddress()
+                    "[SERVER] Client disconnected before registration: "
+                        + socket.getRemoteSocketAddress()
                 );
                 return;
             }
@@ -40,10 +41,10 @@ public class ClientHandler implements Runnable {
             readMessagesLoop();
         } catch (IOException e) {
             System.err.println(
-                    "[SERVER] Client communication error "
-                            + getClientDescription()
-                            + ": "
-                            + e.getMessage()
+                "[SERVER] Client communication error "
+                    + getClientDescription()
+                    + ": "
+                    + e.getMessage()
             );
             e.printStackTrace();
         } finally {
@@ -56,10 +57,10 @@ public class ClientHandler implements Runnable {
         OutputStream outputStream = socket.getOutputStream();
 
         reader = new BufferedReader(
-                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+            new InputStreamReader(inputStream, StandardCharsets.UTF_8)
         );
         writer = new BufferedWriter(
-                new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+            new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
         );
     }
 
@@ -90,9 +91,9 @@ public class ClientHandler implements Runnable {
 
     private void readMessagesLoop() throws IOException {
         System.out.println(
-                "[SERVER] Started reading messages from "
-                        + getClientDescription()
-                        + "."
+            "[SERVER] Started reading messages from "
+                + getClientDescription()
+                + "."
         );
 
         while (true) {
@@ -100,7 +101,7 @@ public class ClientHandler implements Runnable {
 
             if (message == null) {
                 System.out.println(
-                        "[SERVER] Client disconnected: " + getClientDescription()
+                    "[SERVER] Client disconnected: " + getClientDescription()
                 );
                 return;
             }
@@ -120,7 +121,38 @@ public class ClientHandler implements Runnable {
     }
 
     private void cleanup() {
-        // добавим следующим шагом
+        if (nickname != null) {
+            server.removeClient(nickname);
+        }
+
+        closeResource(writer, "writer");
+        closeResource(reader, "reader");
+        closeResource(socket, "socket");
+
+        System.out.println(
+            "[SERVER] Client resources closed for "
+                + getClientDescription()
+                + "."
+        );
+    }
+
+    private void closeResource(Closeable resource, String resourceName) {
+        if (resource == null) {
+            return;
+        }
+
+        try {
+            resource.close();
+        } catch (IOException e) {
+            System.err.println(
+                "[SERVER] Failed to close "
+                    + resourceName
+                    + " for "
+                    + getClientDescription()
+                    + ": "
+                    + e.getMessage()
+            );
+        }
     }
 
     public synchronized void sendMessage(String message) throws IOException {
