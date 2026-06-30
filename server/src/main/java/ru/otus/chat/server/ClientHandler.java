@@ -31,12 +31,20 @@ public class ClientHandler implements Runnable {
 
             if (!registerNickname()) {
                 System.out.println(
-                        "[SERVER] Client disconnected before registration: " + socket.getRemoteSocketAddress());
+                        "[SERVER] Client disconnected before registration: "
+                                + socket.getRemoteSocketAddress()
+                );
                 return;
             }
+
             readMessagesLoop();
         } catch (IOException e) {
-            System.err.println("[SERVER] Client communication error " + getClientDescription() + ": " + e.getMessage());
+            System.err.println(
+                    "[SERVER] Client communication error "
+                            + getClientDescription()
+                            + ": "
+                            + e.getMessage()
+            );
             e.printStackTrace();
         } finally {
             cleanup();
@@ -47,21 +55,22 @@ public class ClientHandler implements Runnable {
         InputStream inputStream = socket.getInputStream();
         OutputStream outputStream = socket.getOutputStream();
 
-        reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-
-        writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        reader = new BufferedReader(
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+        );
+        writer = new BufferedWriter(
+                new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+        );
     }
 
     private boolean registerNickname() throws IOException {
         while (true) {
             sendMessage("Enter your nickname: ");
-
             String candidate = reader.readLine();
 
             if (candidate == null) {
                 return false;
             }
-
             candidate = candidate.trim();
 
             try {
@@ -80,16 +89,21 @@ public class ClientHandler implements Runnable {
     }
 
     private void readMessagesLoop() throws IOException {
-        System.out.println("[SERVER] Started reading messages from " + getClientDescription() + ".");
+        System.out.println(
+                "[SERVER] Started reading messages from "
+                        + getClientDescription()
+                        + "."
+        );
 
         while (true) {
             String message = reader.readLine();
 
             if (message == null) {
-                System.out.println("[SERVER] Client disconnected: " + getClientDescription());
+                System.out.println(
+                        "[SERVER] Client disconnected: " + getClientDescription()
+                );
                 return;
             }
-
             message = message.trim();
 
             if (message.isEmpty()) {

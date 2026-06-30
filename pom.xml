@@ -25,7 +25,6 @@
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.1.2</maven.surefire.plugin.version>
         <spotless.maven.plugin.version>2.43.0</spotless.maven.plugin.version>
-        <palantir.java.format.version>2.39.0</palantir.java.format.version>
         <maven.checkstyle.plugin.version>3.4.0</maven.checkstyle.plugin.version>
         <checkstyle.version>10.17.0</checkstyle.version>
     </properties>
@@ -43,9 +42,9 @@
                             <include>src/main/java/**/*.java</include>
                             <include>src/test/java/**/*.java</include>
                         </includes>
-                        <palantirJavaFormat>
-                            <version>${palantir.java.format.version}</version>
-                        </palantirJavaFormat>
+                        <eclipse>
+                            <file>${maven.multiModuleProjectDirectory}/config/formatter/eclipse-java-formatter.xml</file>
+                        </eclipse>
                         <removeUnusedImports />
                         <trimTrailingWhitespace />
                         <endWithNewline />
