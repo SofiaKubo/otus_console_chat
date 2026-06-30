@@ -20,47 +20,54 @@ public class ChatServer {
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("[SERVER] Started on port " + port + ".");
-            System.out.println("[SERVER] Waiting for connections.");
+            System.out.println("[SERVER] Waiting for clients...");
 
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                String clientAddress = clientSocket
-                    .getRemoteSocketAddress()
-                    .toString();
-
-                System.out.println("[SERVER] Client connected: " + clientAddress);
-                try {
-                    ClientHandler clientHandler = new ClientHandler(
-                        clientSocket,
-                        this
-                    );
-                    Thread thread = new Thread(
-                        clientHandler,
-                        "client-handler-" + clientAddress
-                    );
-
-                    System.out.println(
-                        "[SERVER] Client handler created for: "
-                            + clientAddress
-                    );
-                    thread.start();
-                    System.out.println(
-                        "[SERVER] Client handler thread started for: "
-                            + clientAddress
-                    );
-                } catch (RuntimeException e) {
-                    System.err.println(
-                        "[SERVER] Failed to start client handler for: "
-                            + clientAddress
-                    );
-                    System.err.println("[SERVER] Reason: " + e.getMessage());
-                    closeClientSocket(clientSocket);
-                }
-            }
+            acceptClients(serverSocket);
         } catch (IOException e) {
             System.err.println("[SERVER] Server error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void acceptClients(ServerSocket serverSocket) throws IOException {
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            startClientHandler(clientSocket);
+        }
+    }
+
+    private void startClientHandler(Socket clientSocket) {
+        String clientAddress = getClientAddress(clientSocket);
+
+        System.out.println("[SERVER] Connection accepted: " + clientAddress);
+
+        try {
+            ClientHandler clientHandler = new ClientHandler(clientSocket, this);
+            Thread thread = createClientThread(clientHandler, clientAddress);
+
+            thread.start();
+        } catch (RuntimeException e) {
+            System.err.println(
+                "[SERVER] Failed to start client handler for: "
+                    + clientAddress
+            );
+            System.err.println("[SERVER] Reason: " + e.getMessage());
+            closeClientSocket(clientSocket);
+        }
+    }
+
+    private Thread createClientThread(
+        ClientHandler clientHandler,
+        String clientAddress
+    ) {
+        return new Thread(
+            clientHandler,
+            "client-handler-" + clientAddress
+        );
+    }
+
+    private String getClientAddress(Socket clientSocket) {
+        return String.valueOf(clientSocket.getRemoteSocketAddress());
     }
 
     public boolean registerClient(String nickname, ClientHandler clientHandler) {
@@ -75,7 +82,10 @@ public class ChatServer {
         );
 
         if (previousClient != null) {
-            System.out.println("[SERVER] Nickname is already taken: " + nickname);
+            System.out.println(
+                "[SERVER] Registration rejected, nickname is already taken: "
+                    + nickname
+            );
             return false;
         }
         System.out.println("[SERVER] Client registered: " + nickname);
@@ -90,7 +100,12 @@ public class ChatServer {
         ClientHandler removedClient = clients.remove(nickname);
 
         if (removedClient != null) {
-            System.out.println("[SERVER] Client disconnected: " + nickname);
+            System.out.println(
+                "[SERVER] User left: "
+                    + nickname
+                    + ". Online users: "
+                    + clients.size()
+            );
             broadcastSystemMessage(nickname + " left the chat.");
         }
     }
