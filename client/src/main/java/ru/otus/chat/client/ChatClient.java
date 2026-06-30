@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class ChatClient {
+    private static final String EXIT_COMMAND = "exit";
+
     private final String host;
     private final int port;
 
@@ -20,8 +22,6 @@ public class ChatClient {
     private volatile boolean running;
     private BufferedReader serverReader;
     private BufferedWriter serverWriter;
-
-    private static final String EXIT_COMMAND = "exit";
 
     public ChatClient(String host, int port) {
         this.host = host;
@@ -40,12 +40,10 @@ public class ChatClient {
         } catch (IOException e) {
             System.err.println(
                 "[CLIENT] Failed to communicate with server at "
-                    + host + ":"
-                    + port
+                    + getServerAddress()
                     + ": "
                     + e.getMessage()
             );
-            e.printStackTrace();
         } finally {
             running = false;
             waitForListenerThread();
@@ -55,7 +53,12 @@ public class ChatClient {
 
     private void connect() throws IOException {
         socket = new Socket(host, port);
-        System.out.println("[CLIENT] Connected to server at " + host + ":" + port + ".");
+
+        System.out.println(
+            "[CLIENT] Connected to server at "
+                + getServerAddress()
+                + "."
+        );
     }
 
     private void initializeStreams() throws IOException {
@@ -158,5 +161,9 @@ public class ChatClient {
                     + e.getMessage()
             );
         }
+    }
+
+    private String getServerAddress() {
+        return host + ":" + port;
     }
 }
