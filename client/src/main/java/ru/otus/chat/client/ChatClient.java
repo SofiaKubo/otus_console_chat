@@ -39,11 +39,10 @@ public class ChatClient {
             readConsoleAndSendMessages();
         } catch (IOException e) {
             System.err.println(
-                "[CLIENT] Failed to communicate with server at "
-                    + getServerAddress()
-                    + ": "
-                    + e.getMessage()
-            );
+                    "[CLIENT] Failed to communicate with server at "
+                            + getServerAddress()
+                            + ": "
+                            + e.getMessage());
         } finally {
             running = false;
             waitForListenerThread();
@@ -55,10 +54,9 @@ public class ChatClient {
         socket = new Socket(host, port);
 
         System.out.println(
-            "[CLIENT] Connected to server at "
-                + getServerAddress()
-                + "."
-        );
+                "[CLIENT] Connected to server at "
+                        + getServerAddress()
+                        + ".");
     }
 
     private void initializeStreams() throws IOException {
@@ -66,11 +64,9 @@ public class ChatClient {
         OutputStream outputStream = socket.getOutputStream();
 
         serverReader = new BufferedReader(
-            new InputStreamReader(inputStream, StandardCharsets.UTF_8)
-        );
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8));
         serverWriter = new BufferedWriter(
-            new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-        );
+                new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
     }
 
     private void startServerListener() {
@@ -88,9 +84,8 @@ public class ChatClient {
             } catch (IOException e) {
                 if (running) {
                     System.err.println(
-                        "[CLIENT] Failed to read message from server: "
-                            + e.getMessage()
-                    );
+                            "[CLIENT] Failed to read message from server: "
+                                    + e.getMessage());
                 }
             }
         }, "server-listener");
@@ -116,8 +111,7 @@ public class ChatClient {
 
     private void readConsoleAndSendMessages() throws IOException {
         BufferedReader consoleReader = new BufferedReader(
-            new InputStreamReader(System.in, StandardCharsets.UTF_8)
-        );
+                new InputStreamReader(System.in, StandardCharsets.UTF_8));
 
         while (true) {
             String message = consoleReader.readLine();
@@ -155,11 +149,10 @@ public class ChatClient {
             resource.close();
         } catch (IOException e) {
             System.err.println(
-                "[CLIENT] Failed to close "
-                    + resourceName
-                    + ": "
-                    + e.getMessage()
-            );
+                    "[CLIENT] Failed to close "
+                            + resourceName
+                            + ": "
+                            + e.getMessage());
         }
     }
 
