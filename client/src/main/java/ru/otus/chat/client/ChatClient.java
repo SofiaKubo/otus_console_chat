@@ -16,6 +16,8 @@ public class ChatClient {
     private final int port;
 
     private Socket socket;
+    private Thread listenerThread;
+    private volatile boolean running;
     private BufferedReader serverReader;
     private BufferedWriter serverWriter;
 
@@ -30,23 +32,30 @@ public class ChatClient {
         try {
             connect();
             initializeStreams();
+
+            running = true;
+
             startServerListener();
             readConsoleAndSendMessages();
         } catch (IOException e) {
             System.err.println(
                 "[CLIENT] Failed to communicate with server at "
-                    + host + ":" + port
-                    + ": " + e.getMessage()
+                    + host + ":"
+                    + port
+                    + ": "
+                    + e.getMessage()
             );
             e.printStackTrace();
         } finally {
+            running = false;
+            waitForListenerThread();
             cleanup();
         }
     }
 
     private void connect() throws IOException {
         socket = new Socket(host, port);
-        System.out.println("[CLIENT] Connected to server at " + host + ": " + port + ".");
+        System.out.println("[CLIENT] Connected to server at " + host + ":" + port + ".");
     }
 
     private void initializeStreams() throws IOException {
@@ -62,7 +71,7 @@ public class ChatClient {
     }
 
     private void startServerListener() {
-        Thread listenerThread = new Thread(() -> {
+        listenerThread = new Thread(() -> {
             try {
                 String message;
 
@@ -70,14 +79,36 @@ public class ChatClient {
                     System.out.println(message);
                 }
 
-                System.out.println("[CLIENT] Server closed connection.");
+                if (running) {
+                    System.out.println("[CLIENT] Server closed connection.");
+                }
             } catch (IOException e) {
-                System.err.println(
-                    "[CLIENT] Failed to read message from server: " + e.getMessage());
+                if (running) {
+                    System.err.println(
+                        "[CLIENT] Failed to read message from server: "
+                            + e.getMessage()
+                    );
+                }
             }
         }, "server-listener");
 
         listenerThread.start();
+    }
+
+    private void waitForListenerThread() {
+        if (listenerThread == null) {
+            return;
+        }
+
+        if (Thread.currentThread() == listenerThread) {
+            return;
+        }
+
+        try {
+            listenerThread.join(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void readConsoleAndSendMessages() throws IOException {
