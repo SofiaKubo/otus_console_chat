@@ -12,13 +12,13 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class ClientHandler implements Runnable {
+    private static final String EXIT_COMMAND = "exit";
+
     private final Socket socket;
     private final ChatServer server;
     private BufferedReader reader;
     private BufferedWriter writer;
     private String nickname;
-
-    private static final String EXIT_COMMAND = "exit";
 
     public ClientHandler(Socket clientSocket, ChatServer server) {
         this.socket = clientSocket;
@@ -36,20 +36,18 @@ public class ClientHandler implements Runnable {
 
             if (!registerNickname()) {
                 System.out.println(
-                    "[SERVER] Client disconnected before registration: "
-                        + socket.getRemoteSocketAddress()
-                );
+                        "[SERVER] Client disconnected before registration: "
+                                + socket.getRemoteSocketAddress());
                 return;
             }
 
             readMessagesLoop();
         } catch (IOException e) {
             System.err.println(
-                "[SERVER] Client "
-                    + getClientDescription()
-                    + " disconnected unexpectedly. Reason: "
-                    + e.getMessage()
-            );
+                    "[SERVER] Client "
+                            + getClientDescription()
+                            + " disconnected unexpectedly. Reason: "
+                            + e.getMessage());
         } finally {
             cleanup();
         }
@@ -60,11 +58,9 @@ public class ClientHandler implements Runnable {
         OutputStream outputStream = socket.getOutputStream();
 
         reader = new BufferedReader(
-            new InputStreamReader(inputStream, StandardCharsets.UTF_8)
-        );
+                new InputStreamReader(inputStream, StandardCharsets.UTF_8));
         writer = new BufferedWriter(
-            new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
-        );
+                new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
     }
 
     private boolean registerNickname() throws IOException {
@@ -83,6 +79,7 @@ public class ClientHandler implements Runnable {
                 if (registered) {
                     this.nickname = candidate;
                     sendMessage("Welcome, " + nickname + "! You joined the chat.");
+                    server.notifyClientJoined(this);
                     return true;
                 }
 
@@ -134,13 +131,12 @@ public class ClientHandler implements Runnable {
             resource.close();
         } catch (IOException e) {
             System.err.println(
-                "[SERVER] Failed to close "
-                    + resourceName
-                    + " for client "
-                    + getClientDescription()
-                    + ": "
-                    + e.getMessage()
-            );
+                    "[SERVER] Failed to close "
+                            + resourceName
+                            + " for client "
+                            + getClientDescription()
+                            + ": "
+                            + e.getMessage());
         }
     }
 

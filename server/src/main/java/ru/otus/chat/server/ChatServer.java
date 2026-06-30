@@ -8,7 +8,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ChatServer {
     private static final String PRIVATE_MESSAGE_COMMAND = "/w";
-    private static final String PRIVATE_MESSAGE_USAGE = "Usage: /w <nickname> <message>";
+    private static final String PRIVATE_MESSAGE_FORMAT =
+            PRIVATE_MESSAGE_COMMAND + " <nickname> <message>";
+    private static final String PRIVATE_MESSAGE_USAGE = "Usage: " + PRIVATE_MESSAGE_FORMAT;
+    private static final String SYSTEM_MESSAGE_PREFIX = "[SYSTEM] ";
 
     private final int port;
     private final ConcurrentMap<String, ClientHandler> clients;
@@ -40,21 +43,37 @@ public class ChatServer {
         }
 
         ClientHandler previousClient = clients.putIfAbsent(
-            nickname,
-            clientHandler
-        );
+                nickname,
+                clientHandler);
 
         if (previousClient != null) {
             System.out.println(
-                "[SERVER] Nickname "
-                    + nickname
-                    + " is already taken."
-            );
+                    "[SERVER] Nickname "
+                            + nickname
+                            + " is already taken.");
             return false;
         }
 
         System.out.println("[SERVER] Client " + nickname + " registered.");
         return true;
+    }
+
+    public void notifyClientJoined(ClientHandler clientHandler) {
+        if (clientHandler == null) {
+            System.err.println("[SERVER] Cannot notify client joined: client handler is null.");
+            return;
+        }
+
+        String nickname = clientHandler.getNickname();
+
+        if (nickname == null) {
+            System.err.println("[SERVER] Cannot notify client joined: nickname is null.");
+            return;
+        }
+
+        broadcastMessage(
+                clientHandler,
+                SYSTEM_MESSAGE_PREFIX + "User " + nickname + " joined the chat.");
     }
 
     public void removeClient(String nickname) {
@@ -66,11 +85,10 @@ public class ChatServer {
 
         if (removedClient != null) {
             System.out.println(
-                "[SERVER] User "
-                    + nickname
-                    + " left. Online users: "
-                    + clients.size()
-            );
+                    "[SERVER] User "
+                            + nickname
+                            + " left. Online users: "
+                            + clients.size());
             broadcastSystemMessage("User " + nickname + " left the chat.");
         }
     }
@@ -115,22 +133,19 @@ public class ChatServer {
             thread.start();
         } catch (RuntimeException e) {
             System.err.println(
-                "[SERVER] Failed to start client handler for: "
-                    + clientAddress
-            );
+                    "[SERVER] Failed to start client handler for: "
+                            + clientAddress);
             System.err.println("[SERVER] Reason: " + e.getMessage());
             closeClientSocket(clientSocket);
         }
     }
 
     private Thread createClientThread(
-        ClientHandler clientHandler,
-        String clientAddress
-    ) {
+            ClientHandler clientHandler,
+            String clientAddress) {
         return new Thread(
-            clientHandler,
-            "client-handler-" + clientAddress
-        );
+                clientHandler,
+                "client-handler-" + clientAddress);
     }
 
     private String getClientAddress(Socket clientSocket) {
@@ -184,20 +199,17 @@ public class ChatServer {
 
         if (recipient == sender) {
             sendMessageSafely(
-                sender,
-                "You cannot send a private message to yourself."
-            );
+                    sender,
+                    "You cannot send a private message to yourself.");
             return;
         }
 
         sendMessageSafely(
-            recipient,
-            "[private from " + senderNickname + "] " + privateMessage
-        );
+                recipient,
+                "[private from " + senderNickname + "] " + privateMessage);
         sendMessageSafely(
-            sender,
-            "[private to " + recipientNickname + "] " + privateMessage
-        );
+                sender,
+                "[private to " + recipientNickname + "] " + privateMessage);
     }
 
     private void broadcastSystemMessage(String message) {
@@ -210,7 +222,7 @@ public class ChatServer {
             return;
         }
 
-        String preparedMessage = "[SYSTEM] " + message;
+        String preparedMessage = SYSTEM_MESSAGE_PREFIX + message;
 
         for (ClientHandler clientHandler : clients.values()) {
             sendMessageSafely(clientHandler, preparedMessage);
@@ -223,14 +235,13 @@ public class ChatServer {
 
     private boolean isPrivateMessageCommand(String message) {
         return PRIVATE_MESSAGE_COMMAND.equals(message)
-            || message.startsWith(PRIVATE_MESSAGE_COMMAND + " ");
+                || message.startsWith(PRIVATE_MESSAGE_COMMAND + " ");
     }
 
     private boolean isValidSenderMessageData(
-        ClientHandler sender,
-        String message,
-        String action
-    ) {
+            ClientHandler sender,
+            String message,
+            String action) {
         if (sender == null) {
             System.err.println("[SERVER] Cannot " + action + ": sender is null.");
             return false;
@@ -243,10 +254,9 @@ public class ChatServer {
 
         if (sender.getNickname() == null) {
             System.err.println(
-                "[SERVER] Cannot "
-                    + action
-                    + ": sender is not registered."
-            );
+                    "[SERVER] Cannot "
+                            + action
+                            + ": sender is not registered.");
             return false;
         }
 
@@ -268,11 +278,10 @@ public class ChatServer {
             clientHandler.sendMessage(message);
         } catch (IOException e) {
             System.err.println(
-                "[SERVER] Failed to send message to user "
-                    + clientHandler.getNickname()
-                    + ": "
-                    + e.getMessage()
-            );
+                    "[SERVER] Failed to send message to user "
+                            + clientHandler.getNickname()
+                            + ": "
+                            + e.getMessage());
         }
     }
 
@@ -288,8 +297,7 @@ public class ChatServer {
         }
         if (nickname.startsWith("/")) {
             throw new IllegalArgumentException(
-                "Nickname cannot start with a slash('/')."
-            );
+                    "Nickname cannot start with a slash('/').");
         }
     }
 
@@ -299,9 +307,8 @@ public class ChatServer {
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println(
-                    "[SERVER] Failed to close client socket: "
-                        + e.getMessage()
-                );
+                        "[SERVER] Failed to close client socket: "
+                                + e.getMessage());
             }
         }
     }
